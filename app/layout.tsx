@@ -1,19 +1,17 @@
+import { Toaster } from "sonner";
 import type { Metadata } from "next";
-import { mona_Sans, Geist } from "next/font/google";
+import { Mona_Sans } from "next/font/google";
+
 import "./globals.css";
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const monaSans = mona_Sans({
+const monaSans = Mona_Sans({
   variable: "--font-mona-sans",
   subsets: ["latin"],
 });
 
-
 export const metadata: Metadata = {
-  title: "Aimhyr - AI Interview Simulator",
-  description: "Aimhyr is an AI interview simulator that helps you prepare for your next job interview.",
+  title: "PrepWise",
+  description: "An AI-powered platform for preparing for mock interviews",
 };
 
 export default function RootLayout({
@@ -22,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", geist.variable)}>
-      <body
-        className={`${monaSans.classname} antialiased`}
-      >
+    <html lang="en" className="dark">
+      <body className={`${monaSans.className} antialiased pattern`}>
         {children}
+
+        <Toaster />
       </body>
     </html>
   );
