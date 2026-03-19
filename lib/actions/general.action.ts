@@ -2,6 +2,8 @@
 
 import { db } from "@/firebase/admin";
 import { generateInterviewFeedback } from "@/lib/ai/feedback-generator";
+import { extractInterviewParams } from "@/lib/ai/param-extractor";
+import { generateQuestions } from "@/lib/services/interview.service";
 
 export async function createFeedback(params: CreateFeedbackParams) {
   const { interviewId, userId, transcript, feedbackId } = params;
@@ -98,4 +100,28 @@ export async function getInterviewsByUserId(
     id: doc.id,
     ...doc.data(),
   })) as Interview[];
+}
+
+/**
+ * Extract interview parameters from a conversation transcript
+ * and generate interview questions.
+ */
+export async function generateInterviewFromTranscript(params: {
+  userId: string;
+  transcript: { role: string; content: string }[];
+}): Promise<{ success: boolean }> {
+  const { userId, transcript } = params;
+
+  // Extract structured parameters from the conversation
+  const interviewParams = await extractInterviewParams(transcript);
+
+  // Generate questions and save the interview
+  return generateQuestions({
+    userid: userId,
+    role: interviewParams.role,
+    level: interviewParams.level,
+    techstack: interviewParams.techstack,
+    type: interviewParams.type,
+    amount: interviewParams.amount,
+  });
 }

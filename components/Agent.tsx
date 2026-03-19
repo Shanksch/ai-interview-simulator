@@ -5,7 +5,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { createFeedback } from "@/lib/actions/general.action";
+import {
+  createFeedback,
+  generateInterviewFromTranscript,
+} from "@/lib/actions/general.action";
 import {
   getGeneratorAgentId,
   getInterviewerAgentId,
@@ -39,20 +42,22 @@ const Agent = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
   const [conversation, setConversation] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Handle feedback generation when call ends
+  // Handle post-call actions (feedback OR interview generation)
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
     }
 
-    const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+    const handleGenerateFeedback = async (msgs: SavedMessage[]) => {
       console.log("handleGenerateFeedback");
+      setIsProcessing(true);
 
       const { success, feedbackId: id } = await createFeedback({
         interviewId: interviewId!,
         userId: userId!,
-        transcript: messages,
+        transcript: msgs,
         feedbackId,
       });
 
@@ -64,20 +69,47 @@ const Agent = ({
       }
     };
 
-    if (callStatus === CallStatus.FINISHED) {
+    const handleGenerateInterview = async (msgs: SavedMessage[]) => {
+      console.log("handleGenerateInterview — extracting params from transcript...");
+      setIsProcessing(true);
+      setLastMessage("Generating your interview questions... Please wait.");
+
+      try {
+        const result = await generateInterviewFromTranscript({
+          userId: userId!,
+          transcript: msgs,
+        });
+
+        if (result.success) {
+          console.log("Interview generated successfully!");
+          router.push("/");
+        } else {
+          console.error("Failed to generate interview:", result);
+          setLastMessage("Failed to generate interview. Please try again.");
+          setIsProcessing(false);
+        }
+      } catch (error) {
+        console.error("Error generating interview:", error);
+        setLastMessage("Something went wrong. Please try again.");
+        setIsProcessing(false);
+      }
+    };
+
+    if (callStatus === CallStatus.FINISHED && !isProcessing) {
       if (type === "generate") {
-        router.push("/");
+        handleGenerateInterview(messages);
       } else {
         handleGenerateFeedback(messages);
       }
     }
-  }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callStatus]);
 
   const handleCall = useCallback(async () => {
     setCallStatus(CallStatus.CONNECTING);
 
     try {
-      // Dynamically import the ElevenLabs React SDK (client-side only)
+      // Dynamically import the ElevenLabs client SDK (client-side only)
       const { Conversation } = await import("@elevenlabs/client");
 
       const agentId =
@@ -125,11 +157,11 @@ const Agent = ({
   }, [type, userName, userId, questions]);
 
   const handleDisconnect = useCallback(async () => {
-    setCallStatus(CallStatus.FINISHED);
     if (conversation) {
       await conversation.endSession();
       setConversation(null);
     }
+    setCallStatus(CallStatus.FINISHED);
   }, [conversation]);
 
   return (
@@ -165,7 +197,7 @@ const Agent = ({
         </div>
       </div>
 
-      {messages.length > 0 && (
+      {(messages.length > 0 || isProcessing) && (
         <div className="transcript-border">
           <div className="transcript">
             <p
@@ -183,18 +215,24 @@ const Agent = ({
 
       <div className="w-full flex justify-center">
         {callStatus !== "ACTIVE" ? (
-          <button className="relative btn-call" onClick={() => handleCall()}>
+          <button
+            className="relative btn-call"
+            onClick={() => handleCall()}
+            disabled={isProcessing}
+          >
             <span
               className={cn(
                 "absolute animate-ping rounded-full opacity-75",
-                callStatus !== "CONNECTING" && "hidden"
+                callStatus !== "CONNECTING" && !isProcessing && "hidden"
               )}
             />
 
             <span className="relative">
-              {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Call"
-                : ". . ."}
+              {isProcessing
+                ? "Processing..."
+                : callStatus === "INACTIVE" || callStatus === "FINISHED"
+                  ? "Call"
+                  : ". . ."}
             </span>
           </button>
         ) : (
