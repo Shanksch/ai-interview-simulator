@@ -1,6 +1,6 @@
 # Production Rewrite — AI Interview Simulator
 
-Rewrite the existing PrepWise codebase into a clean, layered, production-ready system. **Includes full migration from Vapi to ElevenLabs Conversational AI.**
+Rewrite the existing Aimhyr codebase into a clean, layered, production-ready system. **Includes full migration from Vapi to ElevenLabs Conversational AI.**
 
 > [!IMPORTANT]
 > This plan keeps the existing frontend UI/CSS intact and focuses on **backend architecture, AI pipeline, ElevenLabs migration, and missing infrastructure**.

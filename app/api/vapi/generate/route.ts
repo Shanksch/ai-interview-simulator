@@ -32,5 +32,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return Response.json({ success: true, data: "PrepWise API" }, { status: 200 });
-}
+  return Response.json({ success: true, data: "Aimhyr API" }, { status: 200 });
+}
