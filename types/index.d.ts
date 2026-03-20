@@ -52,8 +52,11 @@ interface AgentProps {
   userId?: string;
   interviewId?: string;
   feedbackId?: string;
-  type: "generate" | "interview";
+  type: "interview";
   questions?: string[];
+  role?: string;
+  level?: string;
+  techstack?: string[];
 }
 
 interface RouteParams {

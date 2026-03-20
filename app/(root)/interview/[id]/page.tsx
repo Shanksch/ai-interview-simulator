@@ -23,6 +23,9 @@ const InterviewPage = async ({ params }: RouteParams) => {
         feedbackId={undefined}
         type="interview"
         questions={interview.questions}
+        role={interview.role}
+        level={interview.level}
+        techstack={interview.techstack}
       />
     </>
   );

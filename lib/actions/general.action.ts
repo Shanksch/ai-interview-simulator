@@ -2,7 +2,6 @@
 
 import { db } from "@/firebase/admin";
 import { generateInterviewFeedback } from "@/lib/ai/feedback-generator";
-import { extractInterviewParams } from "@/lib/ai/param-extractor";
 import { generateQuestions } from "@/lib/services/interview.service";
 
 export async function createFeedback(params: CreateFeedbackParams) {
@@ -102,26 +101,67 @@ export async function getInterviewsByUserId(
   })) as Interview[];
 }
 
-/**
- * Extract interview parameters from a conversation transcript
- * and generate interview questions.
- */
-export async function generateInterviewFromTranscript(params: {
+export async function createInterviewFromForm(params: {
   userId: string;
-  transcript: { role: string; content: string }[];
+  role: string;
+  level: string;
+  type: string;
+  techstack: string;
+  amount: number;
 }): Promise<{ success: boolean }> {
-  const { userId, transcript } = params;
-
-  // Extract structured parameters from the conversation
-  const interviewParams = await extractInterviewParams(transcript);
+  const { userId, role, level, type, techstack, amount } = params;
 
   // Generate questions and save the interview
   return generateQuestions({
     userid: userId,
-    role: interviewParams.role,
-    level: interviewParams.level,
-    techstack: interviewParams.techstack,
-    type: interviewParams.type,
-    amount: interviewParams.amount,
+    role,
+    level,
+    techstack,
+    type,
+    amount,
   });
+}
+
+/**
+ * Delete an interview and its associated feedback from Firestore.
+ */
+export async function deleteInterview(params: {
+  interviewId: string;
+  userId: string;
+}): Promise<{ success: boolean }> {
+  const { interviewId, userId } = params;
+
+  try {
+    // Verify the interview belongs to the user
+    const interviewDoc = await db.collection("interviews").doc(interviewId).get();
+    if (!interviewDoc.exists) {
+      return { success: false };
+    }
+    
+    const interviewData = interviewDoc.data();
+    if (interviewData?.userId !== userId) {
+      return { success: false };
+    }
+
+    // Delete associated feedback
+    const feedbackSnapshot = await db
+      .collection("feedback")
+      .where("interviewId", "==", interviewId)
+      .get();
+
+    const batch = db.batch();
+    feedbackSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    // Delete the interview itself
+    batch.delete(db.collection("interviews").doc(interviewId));
+
+    await batch.commit();
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting interview:", error);
+    return { success: false };
+  }
 }

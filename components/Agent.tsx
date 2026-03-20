@@ -5,16 +5,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import {
-  createFeedback,
-  generateInterviewFromTranscript,
-} from "@/lib/actions/general.action";
-import {
-  getGeneratorAgentId,
-  getInterviewerAgentId,
-  buildGeneratorVariables,
-  buildInterviewerVariables,
-} from "@/lib/ai/interviewer-config";
+import { createFeedback } from "@/lib/actions/general.action";
+import { buildInterviewerVariables } from "@/lib/ai/interviewer-config";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -35,6 +27,9 @@ const Agent = ({
   feedbackId,
   type,
   questions,
+  role,
+  level,
+  techstack,
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -54,7 +49,7 @@ const Agent = ({
     }
   }, [messages]);
 
-  // Handle post-call actions (feedback OR interview generation)
+  // Handle post-call actions (feedback)
   useEffect(() => {
     const handleGenerateFeedback = async (msgs: SavedMessage[]) => {
       console.log("handleGenerateFeedback");
@@ -75,38 +70,10 @@ const Agent = ({
       }
     };
 
-    const handleGenerateInterview = async (msgs: SavedMessage[]) => {
-      console.log("handleGenerateInterview — extracting params from transcript...");
-      setIsProcessing(true);
-      setLastMessage("Generating your interview questions... Please wait.");
-
-      try {
-        const result = await generateInterviewFromTranscript({
-          userId: userId!,
-          transcript: msgs,
-        });
-
-        if (result.success) {
-          console.log("Interview generated successfully!");
-          router.push("/");
-        } else {
-          console.error("Failed to generate interview:", result);
-          setLastMessage("Failed to generate interview. Please try again.");
-          setIsProcessing(false);
-        }
-      } catch (error) {
-        console.error("Error generating interview:", error);
-        setLastMessage("Something went wrong. Please try again.");
-        setIsProcessing(false);
-      }
-    };
-
     if (callStatus === CallStatus.FINISHED && !isProcessing) {
       console.log("Call finished. Transcript length:", messagesRef.current.length);
       console.log("Full transcript:", messagesRef.current);
-      if (type === "generate") {
-        handleGenerateInterview(messagesRef.current); // ✅ always the full transcript
-      } else {
+      if (type === "interview") {
         handleGenerateFeedback(messagesRef.current);
       }
     }
@@ -133,41 +100,45 @@ const Agent = ({
       // Dynamically import the ElevenLabs client SDK (client-side only)
       const { Conversation } = await import("@elevenlabs/client");
 
-      const agentId =
-        type === "generate"
-          ? getGeneratorAgentId()
-          : getInterviewerAgentId();
+      // Fetch a signed URL from our API route (keeps agent ID server-side)
+      const res = await fetch("/api/elevenlabs/signed-url");
+      if (!res.ok) {
+        throw new Error("Failed to get signed URL");
+      }
+      const { signedUrl } = await res.json();
 
-      const dynamicVariables =
-        type === "generate"
-          ? buildGeneratorVariables(userName, userId || "")
-          : buildInterviewerVariables(questions || []);
+      const dynamicVariables = buildInterviewerVariables({
+        questions: questions || [],
+        userName,
+        role: role || "General",
+        level: level || "mid",
+        techstack: techstack || [],
+      });
 
-      console.log("Connecting to agent ID:", agentId);
+      console.log("Connecting via signed URL");
       const conv = await Conversation.startSession({
-        agentId,
+        signedUrl,
         dynamicVariables,
         onConnect: () => {
           console.log("ElevenLabs: Connected");
           setCallStatus(CallStatus.ACTIVE);
         },
         onDisconnect: (reason?: any) => {
-        console.log("ElevenLabs: Disconnected — reason:", reason);
-        setCallStatus(CallStatus.FINISHED);
+          console.log("ElevenLabs: Disconnected — reason:", reason);
+          setCallStatus(CallStatus.FINISHED);
         },
-        
+
         onMessage: (message: { source: string; message: string }) => {
-        console.log("onMessage fired:", message.source, message.message);
-        handleMessage(message);
+          console.log("onMessage fired:", message.source, message.message);
+          handleMessage(message);
         },
 
         onModeChange: (mode: { mode: string }) => {
           setIsSpeaking(mode.mode === "speaking");
         },
-        onError: (error: Error) => {
-        console.error("ElevenLabs error:", error);
-        console.error("Error details:", JSON.stringify(error));
-      },
+        onError: (message: string, context?: any) => {
+          console.error("ElevenLabs error:", message, context);
+        },
       });
 
       setConversation(conv);
@@ -175,7 +146,7 @@ const Agent = ({
       console.error("Failed to start conversation:", error);
       setCallStatus(CallStatus.INACTIVE);
     }
-  }, [type, userName, userId, questions, handleMessage]);
+  }, [questions, userName, role, level, techstack, handleMessage]);
 
   const handleDisconnect = useCallback(async () => {
     if (conversation) {

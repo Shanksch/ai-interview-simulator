@@ -257,6 +257,18 @@
     }
   }
 
+  .pill-btn {
+    @apply px-5 py-2.5 rounded-full border border-light-800 bg-dark-200 text-light-100 text-sm cursor-pointer transition-all duration-200 select-none;
+
+    &:hover {
+      @apply bg-dark-300 border-primary-200/50;
+    }
+
+    &.active {
+      @apply bg-primary-200 text-dark-100 font-semibold border-primary-200 shadow-[0_0_12px_rgba(202,197,254,0.3)];
+    }
+  }
+
   .auth-layout {
     @apply flex items-center justify-center mx-auto max-w-7xl min-h-screen max-sm:px-4 max-sm:py-8;
   }
