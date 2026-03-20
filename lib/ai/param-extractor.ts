@@ -29,6 +29,17 @@ export type InterviewParams = z.infer<typeof interviewParamsSchema>;
 export async function extractInterviewParams(
   transcript: { role: string; content: string }[]
 ): Promise<InterviewParams> {
+  // Handle empty or minimal transcripts with sensible defaults
+  if (!transcript || transcript.length === 0) {
+    return {
+      role: "General",
+      level: "mid",
+      techstack: "general",
+      type: "mixed",
+      amount: 5,
+    };
+  }
+
   const transcriptText = transcript
     .map(
       (t) =>
@@ -53,9 +64,8 @@ Conversation transcript:
 ${transcriptText}
 ---
 
-Extract the interview parameters as structured data.`,
+Return a JSON object with the extracted interview parameters: role, level, techstack, type, and amount.`,
     schema: interviewParamsSchema,
-    model: "gemini-2.0-flash-001",
   });
 
   return result;

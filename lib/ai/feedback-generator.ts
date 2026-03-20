@@ -12,7 +12,7 @@ interface GenerateFeedbackParams {
 /**
  * Generate structured interview feedback from a transcript.
  *
- * Pipeline: transcript → prompt builder → LLM (Gemini) → Zod validation → Feedback object
+ * Pipeline: transcript → prompt builder → LLM (Groq) → Zod validation → Feedback object
  */
 export async function generateInterviewFeedback(
   params: GenerateFeedbackParams
@@ -38,7 +38,6 @@ export async function generateInterviewFeedback(
   const feedback = await generateObjectWithRetry({
     prompt,
     schema: feedbackSchema,
-    model: "gemini-2.0-flash-001",
     timeoutMs: 45_000,
   });
 

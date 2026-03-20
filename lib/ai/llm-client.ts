@@ -1,10 +1,11 @@
-import { generateText, generateObject } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
+import { groq } from "@ai-sdk/groq";
 import { z } from "zod";
 import { AIError } from "@/lib/errors";
 
 interface GenerateTextConfig {
   prompt: string;
+  system?: string;
   model?: string;
   maxRetries?: number;
   timeoutMs?: number;
@@ -12,13 +13,15 @@ interface GenerateTextConfig {
 
 interface GenerateObjectConfig<T extends z.ZodType> {
   prompt: string;
+  system?: string;
   schema: T;
   model?: string;
   maxRetries?: number;
   timeoutMs?: number;
 }
 
-const DEFAULT_MODEL = "gemini-2.0-flash-001";
+// Groq model — fast inference with Llama 3.3 70B
+const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -31,6 +34,21 @@ function backoffDelay(attempt: number): Promise<void> {
 }
 
 /**
+ * Extract JSON from a text response that might contain markdown code fences.
+ */
+function extractJSON(text: string): string {
+  // Try to extract JSON from markdown code block
+  const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (codeBlockMatch) return codeBlockMatch[1].trim();
+
+  // Try to find raw JSON object or array
+  const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  if (jsonMatch) return jsonMatch[1].trim();
+
+  return text.trim();
+}
+
+/**
  * Generate raw text from an LLM with retry logic.
  */
 export async function generateTextWithRetry(
@@ -38,6 +56,7 @@ export async function generateTextWithRetry(
 ): Promise<string> {
   const {
     prompt,
+    system,
     model = DEFAULT_MODEL,
     maxRetries = DEFAULT_MAX_RETRIES,
     timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -51,8 +70,9 @@ export async function generateTextWithRetry(
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
       const { text, usage } = await generateText({
-        model: google(model),
+        model: groq(model),
         prompt,
+        system,
         abortSignal: controller.signal,
       });
 
@@ -86,7 +106,10 @@ export async function generateTextWithRetry(
 
 /**
  * Generate a structured object from an LLM with retry logic.
- * Uses Zod schema for validation.
+ * Uses generateText + JSON parsing + Zod validation.
+ *
+ * This approach is more reliable with Groq than generateObject,
+ * which requires response_format support that some models lack.
  */
 export async function generateObjectWithRetry<T extends z.ZodType>(
   config: GenerateObjectConfig<T>
@@ -94,35 +117,43 @@ export async function generateObjectWithRetry<T extends z.ZodType>(
 ): Promise<any> {
   const {
     prompt,
+    system,
     schema,
     model = DEFAULT_MODEL,
     maxRetries = DEFAULT_MAX_RETRIES,
     timeoutMs = DEFAULT_TIMEOUT_MS,
   } = config;
 
+  // Build a system prompt that enforces JSON output
+  const jsonSystem = system
+    ? `${system}\n\nIMPORTANT: You must respond with ONLY valid JSON. No explanation, no markdown, no extra text.`
+    : "You must respond with ONLY valid JSON. No explanation, no markdown, no extra text.";
+
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-      const { object, usage } = await generateObject({
-        model: google(model),
-        prompt,
-        schema,
-        abortSignal: controller.signal,
+      // Use generateText and parse JSON manually
+      const text = await generateTextWithRetry({
+        prompt: `${prompt}\n\nRespond with ONLY valid JSON.`,
+        system: jsonSystem,
+        model,
+        maxRetries: 1, // Don't nest retries
+        timeoutMs,
       });
 
-      clearTimeout(timeout);
+      // Extract and parse JSON from the response
+      const jsonStr = extractJSON(text);
+      const parsed = JSON.parse(jsonStr);
 
-      if (usage) {
-        console.log(
-          `[LLM] Model: ${model} | Tokens: ${usage.totalTokens} | Attempt: ${attempt + 1}`
-        );
-      }
+      // Validate against the Zod schema
+      const validated = schema.parse(parsed);
 
-      return object as z.infer<T>;
+      console.log(
+        `[LLM] Structured output validated | Attempt: ${attempt + 1}`
+      );
+
+      return validated as z.infer<T>;
     } catch (error) {
       lastError = error as Error;
       console.warn(

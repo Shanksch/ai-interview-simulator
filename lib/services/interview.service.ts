@@ -1,7 +1,10 @@
 "use server";
 
 import { db } from "@/firebase/admin";
-import { buildQuestionGenerationPrompt } from "@/lib/ai/prompt-builder";
+import {
+  buildQuestionGenerationPrompt,
+  buildQuestionGenerationSystemPrompt,
+} from "@/lib/ai/prompt-builder";
 import { generateTextWithRetry } from "@/lib/ai/llm-client";
 import { getRandomInterviewCover } from "@/lib/utils";
 import { NotFoundError, ValidationError } from "@/lib/errors";
@@ -35,7 +38,9 @@ export async function generateQuestions(
     amount: amount || 5,
   });
 
-  const questionsText = await generateTextWithRetry({ prompt });
+  const system = buildQuestionGenerationSystemPrompt();
+
+  const questionsText = await generateTextWithRetry({ prompt, system });
 
   let questions: string[];
   try {

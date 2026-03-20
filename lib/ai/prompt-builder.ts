@@ -13,22 +13,52 @@ interface FeedbackPromptParams {
 }
 
 /**
- * Build the prompt used by Gemini to generate interview questions.
- * Designed for voice-assistant compatibility: no special characters.
+ * Build the system prompt for the question generator LLM.
+ * Establishes the AI's persona as an elite technical interviewer.
+ */
+export function buildQuestionGenerationSystemPrompt(): string {
+  return `You are an elite technical interviewer with 15+ years of experience hiring at top tech companies like Google, Amazon, and Microsoft.
+Generate highly relevant, realistic interview questions tailored to the candidate's role, experience level, and interview type.
+
+STRICT RULES:
+- Never repeat similar questions
+- Match complexity precisely to the experience level
+- Each question must test a distinct concept or skill
+- Questions must be natural for a voice conversation — no special characters like "/" or "*"
+- Return ONLY a valid JSON array of question strings — no markdown, no explanation, no extra text
+
+OUTPUT FORMAT:
+["Question 1", "Question 2", "Question 3"]`;
+}
+
+/**
+ * Build the user prompt for generating interview questions.
+ * Provides dynamic context about the role, level, and tech stack.
  */
 export function buildQuestionGenerationPrompt(params: QuestionGenerationParams): string {
   const { role, level, techstack, type, amount } = params;
 
-  return `Prepare questions for a job interview.
-The job role is ${role}.
-The job experience level is ${level}.
-The tech stack used in the job is: ${techstack}.
-The focus between behavioural and technical questions should lean towards: ${type}.
-The amount of questions required is: ${amount}.
-Please return only the questions, without any additional text.
-The questions are going to be read by a voice assistant so do not use "/" or "*" or any other special characters which might break the voice assistant.
-Return the questions formatted like this:
-["Question 1", "Question 2", "Question 3"]`;
+  const levelContext: Record<string, string> = {
+    junior: "0-2 years: focus on fundamentals, basic problem solving, learning ability",
+    mid: "2-5 years: deep concepts, real project experience, trade-offs",
+    senior: "5+ years: system design, leadership, architecture decisions",
+    lead: "8+ years: strategic thinking, team management, cross-functional collaboration",
+  };
+
+  return `Generate ${amount} ${type} interview questions for a ${level} ${role}.
+
+Context:
+- Role: ${role}
+- Experience Level: ${level} (${levelContext[level.toLowerCase()] || levelContext["mid"]})
+- Interview Type: ${type}
+- Tech Stack: ${techstack}
+
+Level Guidelines:
+- Junior (0-2 yrs): fundamentals, basic problem solving, learning ability
+- Mid (2-5 yrs): deep concepts, real project experience, trade-offs
+- Senior (5+ yrs): system design, leadership, architecture decisions
+
+Return ONLY a JSON array of ${amount} question strings.`;
 }
 
 /**

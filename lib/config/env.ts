@@ -6,7 +6,7 @@ const serverSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().min(1),
   FIREBASE_CLIENT_EMAIL: z.string().email(),
   FIREBASE_PRIVATE_KEY: z.string().min(1),
-  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
+  GROQ_API_KEY: z.string().min(1),
   ELEVENLABS_API_KEY: z.string().optional(),
 });
 
