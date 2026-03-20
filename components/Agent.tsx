@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -44,12 +44,18 @@ const Agent = ({
   const [conversation, setConversation] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Handle post-call actions (feedback OR interview generation)
+  // Always holds the latest messages without closure staleness
+  const messagesRef = useRef<SavedMessage[]>([]);
+
+  // Keep lastMessage display in sync with messages state
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
     }
+  }, [messages]);
 
+  // Handle post-call actions (feedback OR interview generation)
+  useEffect(() => {
     const handleGenerateFeedback = async (msgs: SavedMessage[]) => {
       console.log("handleGenerateFeedback");
       setIsProcessing(true);
@@ -96,14 +102,29 @@ const Agent = ({
     };
 
     if (callStatus === CallStatus.FINISHED && !isProcessing) {
+      console.log("Call finished. Transcript length:", messagesRef.current.length);
+      console.log("Full transcript:", messagesRef.current);
       if (type === "generate") {
-        handleGenerateInterview(messages);
+        handleGenerateInterview(messagesRef.current); // ✅ always the full transcript
       } else {
-        handleGenerateFeedback(messages);
+        handleGenerateFeedback(messagesRef.current);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callStatus]);
+
+  // Stable message handler — keeps ref and state in sync
+  const handleMessage = useCallback(
+    (message: { source: string; message: string }) => {
+      const newMsg: SavedMessage = {
+        role: message.source === "user" ? "user" : "assistant",
+        content: message.message,
+      };
+      messagesRef.current = [...messagesRef.current, newMsg];
+      setMessages(messagesRef.current);
+    },
+    []
+  );
 
   const handleCall = useCallback(async () => {
     setCallStatus(CallStatus.CONNECTING);
@@ -122,6 +143,7 @@ const Agent = ({
           ? buildGeneratorVariables(userName, userId || "")
           : buildInterviewerVariables(questions || []);
 
+      console.log("Connecting to agent ID:", agentId);
       const conv = await Conversation.startSession({
         agentId,
         dynamicVariables,
@@ -129,24 +151,23 @@ const Agent = ({
           console.log("ElevenLabs: Connected");
           setCallStatus(CallStatus.ACTIVE);
         },
-        onDisconnect: () => {
-          console.log("ElevenLabs: Disconnected");
-          setCallStatus(CallStatus.FINISHED);
+        onDisconnect: (reason?: any) => {
+        console.log("ElevenLabs: Disconnected — reason:", reason);
+        setCallStatus(CallStatus.FINISHED);
         },
+        
         onMessage: (message: { source: string; message: string }) => {
-          const role =
-            message.source === "user" ? "user" : "assistant";
-          setMessages((prev) => [
-            ...prev,
-            { role, content: message.message },
-          ]);
+        console.log("onMessage fired:", message.source, message.message);
+        handleMessage(message);
         },
+
         onModeChange: (mode: { mode: string }) => {
           setIsSpeaking(mode.mode === "speaking");
         },
         onError: (error: Error) => {
-          console.error("ElevenLabs error:", error);
-        },
+        console.error("ElevenLabs error:", error);
+        console.error("Error details:", JSON.stringify(error));
+      },
       });
 
       setConversation(conv);
@@ -154,7 +175,7 @@ const Agent = ({
       console.error("Failed to start conversation:", error);
       setCallStatus(CallStatus.INACTIVE);
     }
-  }, [type, userName, userId, questions]);
+  }, [type, userName, userId, questions, handleMessage]);
 
   const handleDisconnect = useCallback(async () => {
     if (conversation) {
