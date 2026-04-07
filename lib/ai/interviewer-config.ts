@@ -12,16 +12,17 @@ export interface InterviewContext {
   role: string;
   level: string;
   techstack: string[];
+  type: string;
 }
 
 /** Build dynamic variables for the interviewer agent */
 export function buildInterviewerVariables(context: InterviewContext) {
-  const formattedQuestions = context.questions.map((q) => `- ${q}`).join("\n");
   return {
-    questions: formattedQuestions,
+    questions_json: JSON.stringify(context.questions),
     user_name: context.userName,
     role: context.role,
     level: context.level,
     techstack: context.techstack.join(", "),
+    type: context.type,
   };
 }

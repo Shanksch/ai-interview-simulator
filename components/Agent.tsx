@@ -113,9 +113,11 @@ const Agent = ({
         role: role || "General",
         level: level || "mid",
         techstack: techstack || [],
+        type: type || "interview",
       });
 
       console.log("Connecting via signed URL");
+      console.log("Dynamic variables being sent:", dynamicVariables);
       const conv = await Conversation.startSession({
         signedUrl,
         dynamicVariables,
