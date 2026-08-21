@@ -20,8 +20,8 @@ interface GenerateObjectConfig<T extends z.ZodType> {
   timeoutMs?: number;
 }
 
-// Groq model — fast inference with Llama 3.3 70B
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+// Groq model — fast inference with Llama 3 70B
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 30_000;
 

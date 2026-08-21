@@ -52,7 +52,7 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
 
       if (result.success) {
         toast.success("Interview created successfully!");
-        router.push("/");
+        router.push("/dashboard");
       } else {
         toast.error("Failed to create interview. Please try again.");
       }
@@ -71,8 +71,8 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
     <div className="card-border lg:min-w-[566px] w-full max-w-2xl mx-auto">
       <div className="flex flex-col gap-6 card py-10 px-8 sm:px-12">
         <div className="text-center space-y-2">
-          <h2 className="text-primary-100">Create Interview</h2>
-          <p className="text-light-100 text-sm">Configure your AI mock interview session.</p>
+          <h2 className="text-lp-text font-bold text-3xl tracking-tight">Create Interview</h2>
+          <p className="text-lp-text-muted text-sm">Configure your AI mock interview session.</p>
         </div>
 
         <Form {...form}>
@@ -82,9 +82,9 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="label font-medium">Job Role</FormLabel>
+                  <FormLabel className="label font-medium">// Job Role</FormLabel>
                   <FormControl>
-                    <Input className="input bg-dark-200" placeholder="e.g. Frontend Developer" {...field} />
+                    <Input className="input" placeholder="e.g. Frontend Developer" {...field} />
                   </FormControl>
                   <FormMessage className="text-destructive-100" />
                 </FormItem>
@@ -96,7 +96,7 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
               name="level"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel className="label font-medium">Experience Level</FormLabel>
+                  <FormLabel className="label font-medium">// Experience Level</FormLabel>
                   <FormControl>
                     <div className="flex flex-wrap gap-2">
                       {levels.map((level) => (
@@ -123,7 +123,7 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
               name="type"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel className="label font-medium">Interview Type</FormLabel>
+                  <FormLabel className="label font-medium">// Interview Type</FormLabel>
                   <FormControl>
                     <div className="flex flex-wrap gap-2">
                       {types.map((type) => (
@@ -150,9 +150,9 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
               name="techstack"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="label font-medium">Tech Stack (comma separated)</FormLabel>
+                  <FormLabel className="label font-medium">// Tech Stack (comma separated)</FormLabel>
                   <FormControl>
-                    <Input className="input bg-dark-200" placeholder="e.g. React, Next.js, Tailwind" {...field} />
+                    <Input className="input" placeholder="e.g. React, Next.js, Tailwind" {...field} />
                   </FormControl>
                   <FormMessage className="text-destructive-100" />
                 </FormItem>
@@ -164,10 +164,10 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="label font-medium">Number of Questions</FormLabel>
+                  <FormLabel className="label font-medium">// Number of Questions</FormLabel>
                   <FormControl>
                     <Input 
-                      className="input bg-dark-200" 
+                      className="input" 
                       type="number"
                       min={1}
                       max={20}

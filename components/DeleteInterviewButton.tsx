@@ -34,10 +34,10 @@ const DeleteInterviewButton = ({
   return (
     <button
       onClick={handleDelete}
-      className="absolute top-0 left-0 p-2 rounded-br-lg bg-destructive-100/80 hover:bg-destructive-100 transition-colors cursor-pointer"
+      className="p-1.5 rounded bg-white/[0.04] border border-white/[0.06] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-500 text-lp-text-muted transition-all duration-200 cursor-pointer flex items-center justify-center"
       title="Delete interview"
     >
-      <Trash2 className="size-4 text-white" />
+      <Trash2 className="w-3.5 h-3.5" />
     </button>
   );
 };

@@ -66,7 +66,7 @@ const Agent = ({
         router.push(`/interview/${interviewId}/feedback`);
       } else {
         console.log("Error saving feedback");
-        router.push("/");
+        router.push("/dashboard");
       }
     };
 
@@ -192,13 +192,13 @@ const Agent = ({
       </div>
 
       {(messages.length > 0 || isProcessing) && (
-        <div className="transcript-border">
-          <div className="transcript">
+        <div className="w-full bg-lp-surface-2 border border-white/[0.06] rounded-xl p-6 min-h-[120px] flex items-center justify-center shadow-inner mt-6">
+          <div className="max-w-2xl text-center">
             <p
               key={lastMessage}
               className={cn(
-                "transition-opacity duration-500 opacity-0",
-                "animate-fadeIn opacity-100"
+                "font-mono text-sm leading-relaxed text-lp-text-muted",
+                "transition-opacity duration-500 opacity-0 animate-fadeIn opacity-100"
               )}
             >
               {lastMessage}
@@ -207,31 +207,34 @@ const Agent = ({
         </div>
       )}
 
-      <div className="w-full flex justify-center">
+      <div className="w-full flex justify-center mt-10">
         {callStatus !== "ACTIVE" ? (
           <button
-            className="relative btn-call"
+            className="group relative flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm min-w-[160px] cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] bg-lp-accent text-lp-bg hover:scale-105 hover:bg-lp-accent-hover shadow-[0_0_20px_rgba(232,160,76,0.15)] disabled:opacity-50 disabled:hover:scale-100"
             onClick={() => handleCall()}
             disabled={isProcessing}
           >
             <span
               className={cn(
-                "absolute animate-ping rounded-full opacity-75",
+                "absolute inset-0 bg-lp-accent rounded-full animate-ping opacity-20",
                 callStatus !== "CONNECTING" && !isProcessing && "hidden"
               )}
             />
 
-            <span className="relative">
+            <span className="relative z-10 flex items-center gap-2">
               {isProcessing
                 ? "Processing..."
                 : callStatus === "INACTIVE" || callStatus === "FINISHED"
-                  ? "Call"
-                  : ". . ."}
+                  ? "Start Interview"
+                  : "Connecting..."}
             </span>
           </button>
         ) : (
-          <button className="btn-disconnect" onClick={() => handleDisconnect()}>
-            End
+          <button 
+            className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm min-w-[160px] cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30"
+            onClick={() => handleDisconnect()}
+          >
+            End Interview
           </button>
         )}
       </div>

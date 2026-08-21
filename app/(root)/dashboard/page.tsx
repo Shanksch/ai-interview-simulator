@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import InterviewCard from "@/components/InterviewCard";
+import DashboardHero from "@/components/DashboardHero";
 
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
@@ -23,29 +24,12 @@ async function Home() {
 
   return (
     <>
-      <section className="card-cta">
-        <div className="flex flex-col gap-6 max-w-lg">
-          <h2>Get Interview-Ready with AI-Powered Practice & Feedback</h2>
-          <p className="text-lg">
-            Practice real interview questions & get instant feedback
-          </p>
-
-          <Button asChild className="btn-primary max-sm:w-full">
-            <Link href="/interview">Start an Interview</Link>
-          </Button>
-        </div>
-
-        <Image
-          src="/robot.png"
-          alt="robo-dude"
-          width={400}
-          height={400}
-          className="max-sm:hidden"
-        />
-      </section>
+      <DashboardHero stats={{ total: userInterviews?.length || 0, averageScore: 85 }} />
 
       <section className="flex flex-col gap-6 mt-8">
-        <h2>Your Interviews</h2>
+        <h2 className="font-mono text-[11px] text-lp-text-muted tracking-[0.1em] uppercase flex items-center gap-3">
+          <span className="text-lp-accent">{">"}</span> Your Interviews
+        </h2>
 
         <div className="interviews-section">
           {hasPastInterviews ? (
@@ -67,7 +51,9 @@ async function Home() {
       </section>
 
       <section className="flex flex-col gap-6 mt-8">
-        <h2>Take Interviews</h2>
+        <h2 className="font-mono text-[11px] text-lp-text-muted tracking-[0.1em] uppercase flex items-center gap-3">
+          <span className="text-lp-accent">{">"}</span> Take Interviews
+        </h2>
 
         <div className="interviews-section">
           {hasUpcomingInterviews ? (

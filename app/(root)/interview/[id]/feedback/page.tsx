@@ -21,14 +21,14 @@ async function FeedbackPage({ params }: RouteParams) {
     getFeedbackByInterviewId({ interviewId: id, userId: user.id }),
   ]);
 
-  if (!interview) redirect("/");
+  if (!interview) redirect("/dashboard");
 
   return (
     <section className="section-feedback">
       <div className="flex flex-row justify-center">
         <h1 className="text-4xl font-semibold">
           Feedback on your{" "}
-          <span className="capitalize text-primary-200">{interview.role}</span>{" "}
+          <span className="capitalize text-lp-accent">{interview.role}</span>{" "}
           Interview
         </h1>
       </div>
@@ -39,7 +39,7 @@ async function FeedbackPage({ params }: RouteParams) {
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-2">
               <Image src="/star.svg" width={22} height={22} alt="star" />
-              <p className="text-4xl font-bold text-primary-200">
+              <p className="text-4xl font-bold text-lp-accent">
                 {feedback.totalScore}
                 <span className="text-xl text-light-400">/100</span>
               </p>
@@ -66,7 +66,7 @@ async function FeedbackPage({ params }: RouteParams) {
                   <div className="card p-5 flex flex-col gap-3">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-medium">{category.name}</h3>
-                      <span className="text-primary-200 font-bold">
+                      <span className="text-lp-accent font-bold">
                         {category.score}/100
                       </span>
                     </div>
@@ -115,7 +115,7 @@ async function FeedbackPage({ params }: RouteParams) {
           {/* Action Buttons */}
           <div className="buttons">
             <Button className="btn-primary" asChild>
-              <Link href="/">Back to Dashboard</Link>
+              <Link href="/dashboard">Back to Dashboard</Link>
             </Button>
             <Button className="btn-secondary" asChild>
               <Link href={`/interview/${id}`}>Retake Interview</Link>
