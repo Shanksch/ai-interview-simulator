@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { createFeedback } from "@/lib/actions/general.action";
@@ -38,6 +39,7 @@ const Agent = ({
   const [lastMessage, setLastMessage] = useState<string>("");
   const [conversation, setConversation] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMicMuted, setIsMicMuted] = useState(true);
 
   // Always holds the latest messages without closure staleness
   const messagesRef = useRef<SavedMessage[]>([]);
@@ -79,6 +81,38 @@ const Agent = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callStatus]);
+
+  // Push-to-Talk Logic
+  useEffect(() => {
+    if (callStatus !== CallStatus.ACTIVE) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input field (though none exist here, good practice)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      if (e.code === "Space" && !e.repeat) {
+        e.preventDefault();
+        setIsMicMuted(false);
+        conversation?.setMicMuted(false);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        setIsMicMuted(true);
+        conversation?.setMicMuted(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [callStatus, conversation]);
 
   // Stable message handler — keeps ref and state in sync
   const handleMessage = useCallback(
@@ -144,6 +178,10 @@ const Agent = ({
       });
 
       setConversation(conv);
+      
+      // Start with PTT behavior (muted) now that conv is initialized
+      conv.setMicMuted(true);
+      setIsMicMuted(true);
     } catch (error) {
       console.error("Failed to start conversation:", error);
       setCallStatus(CallStatus.INACTIVE);
@@ -160,49 +198,135 @@ const Agent = ({
 
   return (
     <>
-      <div className="call-view">
+      <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6 items-stretch justify-center relative">
         {/* AI Interviewer Card */}
-        <div className="card-interviewer">
-          <div className="avatar">
+        <div 
+          className={cn(
+            "relative flex-1 flex flex-col items-center justify-center min-h-[320px] rounded-2xl bg-lp-surface-2 border border-white/[0.06] overflow-hidden transition-all duration-300",
+            isSpeaking ? "border-lp-accent/50 shadow-[0_0_30px_-5px_rgba(232,160,76,0.15)]" : "hover:border-white/[0.1]"
+          )}
+        >
+          {/* Status Label */}
+          <div className="absolute top-5 left-5 flex items-center gap-2">
+             <span className={cn(
+                "size-2 rounded-full",
+                callStatus === CallStatus.ACTIVE 
+                  ? isSpeaking ? "bg-lp-accent animate-pulse" : "bg-emerald-500" 
+                  : "bg-lp-text-muted"
+             )} />
+             <span className="font-mono text-[10px] tracking-widest text-lp-text-muted uppercase">
+                {callStatus !== CallStatus.ACTIVE 
+                  ? "SYSTEM INACTIVE" 
+                  : isSpeaking ? "AI SPEAKING" : "AI LISTENING"}
+             </span>
+          </div>
+
+          <div className="relative">
             <Image
               src="/ai-avatar.png"
-              alt="profile-image"
-              width={65}
-              height={54}
-              className="object-cover"
+              alt="AI Interviewer"
+              width={100}
+              height={100}
+              className={cn(
+                "rounded-full object-cover size-[100px] ring-2 ring-white/5 transition-all duration-500",
+                isSpeaking && "ring-lp-accent/40 shadow-[0_0_20px_rgba(232,160,76,0.2)]"
+              )}
             />
-            {isSpeaking && <span className="animate-speak" />}
           </div>
-          <h3>AI Interviewer</h3>
+
+          <h3 className="mt-6 text-lg font-bold text-lp-text tracking-wide">SYSTEM</h3>
+          
+          {/* Waveform */}
+          <div className="h-6 flex items-center justify-center gap-1 mt-4">
+             {isSpeaking ? (
+                <>
+                  <motion.div animate={{ height: ["4px", "20px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut" }} className="w-1 bg-lp-accent rounded-full" />
+                  <motion.div animate={{ height: ["4px", "24px", "4px"] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.1 }} className="w-1 bg-lp-accent rounded-full" />
+                  <motion.div animate={{ height: ["4px", "16px", "4px"] }} transition={{ repeat: Infinity, duration: 0.9, ease: "easeInOut", delay: 0.2 }} className="w-1 bg-lp-accent rounded-full" />
+                </>
+             ) : (
+                <div className="h-1 w-12 bg-white/[0.05] rounded-full" />
+             )}
+          </div>
         </div>
 
-        {/* User Profile Card */}
-        <div className="card-border">
-          <div className="card-content">
+        {/* User Card */}
+        <div 
+          className={cn(
+            "relative flex-1 flex flex-col items-center justify-center min-h-[320px] rounded-2xl bg-lp-surface-2 border border-white/[0.06] overflow-hidden transition-all duration-300",
+            callStatus === CallStatus.ACTIVE && !isMicMuted ? "border-lp-accent/50 shadow-[0_0_30px_-5px_rgba(232,160,76,0.15)]" : "hover:border-white/[0.1]"
+          )}
+        >
+          {/* Status Label */}
+          <div className="absolute top-5 left-5 flex items-center gap-2">
+             <span className={cn(
+                "size-2 rounded-full transition-colors",
+                callStatus === CallStatus.ACTIVE 
+                  ? !isMicMuted ? "bg-lp-accent" : "bg-red-500/80"
+                  : "bg-lp-text-muted"
+             )} />
+             <span className="font-mono text-[10px] tracking-widest text-lp-text-muted uppercase">
+                {callStatus !== CallStatus.ACTIVE 
+                  ? "USER OFFLINE" 
+                  : !isMicMuted ? "MIC ACTIVE" : "MIC MUTED"}
+             </span>
+          </div>
+
+          <div className="relative">
             <Image
               src="/user-avatar.png"
-              alt="profile-image"
-              width={539}
-              height={539}
-              className="rounded-full object-cover size-[120px]"
+              alt="User"
+              width={100}
+              height={100}
+              className={cn(
+                "rounded-full object-cover size-[100px] ring-2 ring-white/5 transition-all duration-500",
+                callStatus === CallStatus.ACTIVE && !isMicMuted && "ring-lp-accent/40 shadow-[0_0_20px_rgba(232,160,76,0.2)]"
+              )}
             />
-            <h3>{userName}</h3>
+          </div>
+
+          <h3 className="mt-6 text-lg font-bold text-lp-text tracking-wide">{userName}</h3>
+          
+          <div className="mt-4 h-6 flex items-center justify-center">
+            {callStatus === CallStatus.ACTIVE ? (
+               <span className={cn(
+                 "font-mono text-[10px] uppercase tracking-widest transition-colors",
+                 isMicMuted ? "text-lp-text-muted" : "text-lp-accent animate-pulse"
+               )}>
+                 {isMicMuted ? "Hold [SPACE] to speak" : "Transmitting..."}
+               </span>
+            ) : (
+               <span className="font-mono text-[10px] uppercase tracking-widest text-white/10">Standby</span>
+            )}
           </div>
         </div>
       </div>
 
       {(messages.length > 0 || isProcessing) && (
-        <div className="w-full bg-lp-surface-2 border border-white/[0.06] rounded-xl p-6 min-h-[120px] flex items-center justify-center shadow-inner mt-6">
-          <div className="max-w-2xl text-center">
-            <p
-              key={lastMessage}
-              className={cn(
-                "font-mono text-sm leading-relaxed text-lp-text-muted",
-                "transition-opacity duration-500 opacity-0 animate-fadeIn opacity-100"
-              )}
-            >
-              {lastMessage}
-            </p>
+        <div className="w-full max-w-5xl mx-auto bg-black/40 border border-white/[0.04] rounded-xl p-6 min-h-[120px] flex flex-col justify-center shadow-inner mt-6">
+          <div className="flex items-center gap-3 mb-3">
+             <span className="font-mono text-[10px] tracking-widest text-lp-accent uppercase">
+               // LIVE TRANSCRIPT
+             </span>
+             <div className="flex-1 h-px bg-gradient-to-r from-lp-accent/20 to-transparent" />
+          </div>
+          <div className="text-left space-y-4">
+             {messages.slice(-2).map((msg, idx) => (
+                <div key={idx} className="animate-fadeIn">
+                   <span className={cn(
+                     "font-mono text-[10px] tracking-widest uppercase mr-3",
+                     msg.role === "user" ? "text-lp-text-muted" : "text-lp-accent"
+                   )}>
+                     [{msg.role === "user" ? "USER" : "SYSTEM"}]
+                   </span>
+                   <span className={cn(
+                     "text-sm leading-relaxed",
+                     msg.role === "user" ? "text-lp-text-muted" : "text-lp-text"
+                   )}>
+                     {msg.content}
+                   </span>
+                </div>
+             ))}
           </div>
         </div>
       )}

@@ -14,7 +14,14 @@ const InterviewPage = async ({ params }: RouteParams) => {
 
   return (
     <>
-      <h3 className="capitalize">{interview.role} Interview</h3>
+      <div className="flex flex-col items-center justify-center space-y-3 text-center mb-8">
+        <span className="font-mono text-[10px] font-semibold tracking-widest text-lp-accent bg-lp-accent/10 px-3 py-1 rounded-full ring-1 ring-lp-accent/20 uppercase">
+          // INTERVIEW ACTIVE
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-lp-text capitalize">
+          {interview.role} Interview
+        </h1>
+      </div>
 
       <Agent
         userName={user.name}
