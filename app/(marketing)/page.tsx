@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuthModal } from "@/components/AuthModalProvider";
 
 /* ═══════════════════════════════════════════════════════
    HOOKS
@@ -324,6 +325,7 @@ function MockInterviewCard() {
 
 export default function LandingPage() {
   const scrolled = useScrolled();
+  const { openAuthModal } = useAuthModal();
 
   return (
     <div className="bg-lp-bg min-h-[100dvh] text-lp-text overflow-x-hidden">
@@ -343,16 +345,16 @@ export default function LandingPage() {
               Aimhyr
             </span>
           </Link>
-          <Link
-            href="/sign-up"
+          <button
+            onClick={() => openAuthModal("sign-up")}
             id="nav-cta"
-            className="inline-flex items-center gap-2 bg-lp-accent text-lp-bg font-semibold text-sm px-5 py-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97]"
+            className="inline-flex items-center gap-2 bg-lp-accent text-lp-bg font-semibold text-sm px-5 py-2.5 rounded-lg transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97] cursor-pointer"
           >
             Start Practicing
             <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-black/10">
               <ArrowIcon />
             </span>
-          </Link>
+          </button>
         </div>
       </nav>
 
@@ -391,16 +393,16 @@ export default function LandingPage() {
 
             <Reveal delay={240}>
               <div className="flex flex-wrap gap-4 items-center">
-                <Link
-                  href="/sign-up"
+                <button
+                  onClick={() => openAuthModal("sign-up")}
                   id="hero-cta"
-                  className="inline-flex items-center gap-2.5 bg-lp-accent text-lp-bg font-semibold px-7 py-3.5 rounded-lg text-base transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97]"
+                  className="inline-flex items-center gap-2.5 bg-lp-accent text-lp-bg font-semibold px-7 py-3.5 rounded-lg text-base transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97] cursor-pointer"
                 >
                   Start Practicing
                   <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-black/10">
                     <ArrowIcon size={12} />
                   </span>
-                </Link>
+                </button>
                 <span className="text-sm text-lp-text-muted">
                   Free to start. No credit card.
                 </span>
@@ -705,16 +707,16 @@ export default function LandingPage() {
                 className="absolute -inset-4 rounded-2xl bg-lp-accent/10 blur-xl pointer-events-none"
                 aria-hidden="true"
               />
-              <Link
-                href="/sign-up"
+              <button
+                onClick={() => openAuthModal("sign-up")}
                 id="closing-cta"
-                className="relative inline-flex items-center gap-2.5 bg-lp-accent text-lp-bg font-semibold px-8 py-4 rounded-lg text-base transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97]"
+                className="relative inline-flex items-center gap-2.5 bg-lp-accent text-lp-bg font-semibold px-8 py-4 rounded-lg text-base transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-lp-accent-hover active:scale-[0.97] cursor-pointer"
               >
                 Start Practicing — Free
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-black/10">
                   <ArrowIcon size={12} />
                 </span>
-              </Link>
+              </button>
             </div>
           </Reveal>
         </div>
@@ -732,18 +734,18 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-6">
-            <Link
-              href="/sign-in"
-              className="text-xs text-lp-text-muted hover:text-lp-text transition-colors duration-200"
+            <button
+              onClick={() => openAuthModal("sign-in")}
+              className="text-xs text-lp-text-muted hover:text-lp-text transition-colors duration-200 cursor-pointer"
             >
               Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="text-xs text-lp-text-muted hover:text-lp-text transition-colors duration-200"
+            </button>
+            <button
+              onClick={() => openAuthModal("sign-up")}
+              className="text-xs text-lp-text-muted hover:text-lp-text transition-colors duration-200 cursor-pointer"
             >
               Get Started
-            </Link>
+            </button>
           </div>
 
           <span className="font-mono text-[10px] text-lp-text-muted tracking-wider">

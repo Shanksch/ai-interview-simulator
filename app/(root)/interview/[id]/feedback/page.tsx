@@ -11,10 +11,9 @@ import {
 import { redirect } from "next/navigation";
 
 async function FeedbackPage({ params }: RouteParams) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-
   const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect("/?auth=true&redirect=" + encodeURIComponent(`/interview/${id}/feedback`));
 
   const [interview, feedback] = await Promise.all([
     getInterviewById(id),

@@ -1,7 +1,12 @@
+import { Suspense } from "react";
 import { Toaster } from "sonner";
 import type { Metadata } from "next";
 import { Mona_Sans } from "next/font/google";
 import { Analytics } from '@vercel/analytics/next';
+
+import AuthModalProvider from "@/components/AuthModalProvider";
+import AuthModal from "@/components/AuthModal";
+import AuthParamHandler from "@/components/AuthParamHandler";
 
 import "./globals.css";
 
@@ -23,10 +28,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${monaSans.className} antialiased`}>
-        {children}
+        <AuthModalProvider>
+          <Suspense fallback={null}>
+            <AuthParamHandler />
+          </Suspense>
+          <AuthModal />
+          {children}
+        </AuthModalProvider>
 
         <Toaster />
       </body>
     </html>
   );
-}
+}

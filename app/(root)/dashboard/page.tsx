@@ -11,8 +11,14 @@ import {
   getLatestInterviews,
 } from "@/lib/actions/general.action";
 
+import { redirect } from "next/navigation";
+
 async function Home() {
   const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/?auth=true&redirect=" + encodeURIComponent("/dashboard"));
+  }
 
   const [userInterviews, allInterview] = await Promise.all([
     getInterviewsByUserId(user?.id!),

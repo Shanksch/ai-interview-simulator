@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Controller, Control, FieldValues, Path } from "react-hook-form";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
   FormItem,
@@ -23,6 +25,10 @@ const FormField = <T extends FieldValues>({
   placeholder,
   type = "text",
 }: FormFieldProps<T>) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
   return (
     <Controller
       control={control}
@@ -31,12 +37,27 @@ const FormField = <T extends FieldValues>({
         <FormItem>
           <FormLabel className="label">{label}</FormLabel>
           <FormControl>
-            <Input
-              className="input"
-              type={type}
-              placeholder={placeholder}
-              {...field}
-            />
+            <div className="relative">
+              <Input
+                className="input pr-10"
+                type={inputType}
+                placeholder={placeholder}
+                {...field}
+              />
+              {isPassword && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-lp-text-muted hover:text-lp-text transition-colors cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+            </div>
           </FormControl>
           <FormMessage />
         </FormItem>

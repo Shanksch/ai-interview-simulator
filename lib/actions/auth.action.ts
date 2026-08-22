@@ -89,6 +89,36 @@ export async function signIn(params: SignInParams) {
   }
 }
 
+export async function googleSignIn(params: GoogleSignInParams) {
+  const { uid, email, name, idToken } = params;
+
+  try {
+    // Check if user exists in db
+    const userRecord = await db.collection("users").doc(uid).get();
+    
+    // If it's a new user, create their document
+    if (!userRecord.exists) {
+      await db.collection("users").doc(uid).set({
+        name,
+        email,
+      });
+    }
+
+    // Set the session cookie
+    await setSessionCookie(idToken);
+    
+    return {
+      success: true,
+    };
+  } catch (error: any) {
+    console.error("Error during Google Sign-In:", error);
+    return {
+      success: false,
+      message: "Failed to complete Google Sign-In. Please try again.",
+    };
+  }
+}
+
 // Sign out user by clearing the session cookie
 export async function signOut() {
   const cookieStore = await cookies();

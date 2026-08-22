@@ -4,10 +4,9 @@ import { getInterviewById } from "@/lib/actions/general.action";
 import { redirect } from "next/navigation";
 
 const InterviewPage = async ({ params }: RouteParams) => {
-  const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-
   const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect("/?auth=true&redirect=" + encodeURIComponent(`/interview/${id}`));
   const interview = await getInterviewById(id);
 
   if (!interview) redirect("/dashboard");

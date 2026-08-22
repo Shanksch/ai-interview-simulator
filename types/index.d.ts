@@ -79,6 +79,13 @@ interface SignInParams {
   idToken: string;
 }
 
+interface GoogleSignInParams {
+  uid: string;
+  email: string;
+  name: string;
+  idToken: string;
+}
+
 interface SignUpParams {
   uid: string;
   name: string;

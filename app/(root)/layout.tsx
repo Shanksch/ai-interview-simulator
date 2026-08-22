@@ -8,7 +8,7 @@ import LogoutButton from "@/components/LogoutButton";
 
 const Layout = async ({ children }: { children: ReactNode }) => {
   const isUserAuthenticated = await isAuthenticated();
-  if (!isUserAuthenticated) redirect("/sign-in");
+  if (!isUserAuthenticated) redirect("/?auth=true&redirect=" + encodeURIComponent("/dashboard"));
 
   return (
     <div className="root-layout bg-lp-bg text-lp-text min-h-screen">
