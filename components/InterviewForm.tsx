@@ -19,7 +19,7 @@ const formSchema = z.object({
   level: z.enum(["junior", "mid", "senior", "lead"]),
   type: z.enum(["technical", "behavioural", "mixed"]),
   techstack: z.string().min(2, "Please enter at least one technology."),
-  amount: z.coerce.number().min(1).max(20).default(5),
+  amount: z.number().min(1).max(20),
 });
 
 interface InterviewFormProps {
@@ -171,7 +171,8 @@ const InterviewForm = ({ userId }: InterviewFormProps) => {
                       type="number"
                       min={1}
                       max={20}
-                      {...field} 
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : "")}
                     />
                   </FormControl>
                   <FormMessage className="text-destructive-100" />
