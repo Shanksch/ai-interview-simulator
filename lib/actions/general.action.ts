@@ -165,3 +165,30 @@ export async function deleteInterview(params: {
     return { success: false };
   }
 }
+
+/**
+ * Get the average score across all feedback for a user.
+ */
+export async function getAverageScoreByUserId(
+  userId: string
+): Promise<number> {
+  try {
+    const feedbackSnapshot = await db
+      .collection("feedback")
+      .where("userId", "==", userId)
+      .get();
+
+    if (feedbackSnapshot.empty) return 0;
+
+    let totalScore = 0;
+    feedbackSnapshot.docs.forEach((doc) => {
+      const data = doc.data();
+      totalScore += data.totalScore || 0;
+    });
+
+    return Math.round(totalScore / feedbackSnapshot.size);
+  } catch (error) {
+    console.error("Error getting average score:", error);
+    return 0;
+  }
+}

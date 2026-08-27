@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
   getInterviewsByUserId,
   getLatestInterviews,
+  getAverageScoreByUserId,
 } from "@/lib/actions/general.action";
 
 import { redirect } from "next/navigation";
@@ -20,9 +21,10 @@ async function Home() {
     redirect("/?auth=true&redirect=" + encodeURIComponent("/dashboard"));
   }
 
-  const [userInterviews, allInterview] = await Promise.all([
+  const [userInterviews, allInterview, averageScore] = await Promise.all([
     getInterviewsByUserId(user?.id!),
     getLatestInterviews({ userId: user?.id! }),
+    getAverageScoreByUserId(user?.id!),
   ]);
 
   const hasPastInterviews = userInterviews?.length! > 0;
@@ -30,7 +32,7 @@ async function Home() {
 
   return (
     <>
-      <DashboardHero stats={{ total: userInterviews?.length || 0, averageScore: 85 }} />
+      <DashboardHero stats={{ total: userInterviews?.length || 0, averageScore }} />
 
       <section className="flex flex-col gap-6 mt-8">
         <h2 className="font-mono text-[11px] text-lp-text-muted tracking-[0.1em] uppercase flex items-center gap-3">
